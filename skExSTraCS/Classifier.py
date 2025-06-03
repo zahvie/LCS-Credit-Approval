@@ -162,9 +162,9 @@ class Classifier:
             # Continuous
             if attributeInfoType:
                 otherRef = cl.specifiedAttList.index(self.specifiedAttList[i])
-                if self.condition[i][0] < cl.condition[otherRef][0]:
+                if self.condition[i][0] > cl.condition[otherRef][0]:
                     return False
-                if self.condition[i][1] > cl.condition[otherRef][1]:
+                if self.condition[i][1] < cl.condition[otherRef][1]:
                     return False
         return True
 
