@@ -1,6 +1,9 @@
 import random
 import copy
 import numpy as np
+import math
+import csv
+import os
 
 class Classifier:
     def __init__(self,model):
@@ -39,58 +42,224 @@ class Classifier:
         self.aveMatchSetSize = setSize
         self.phenotype = phenotype
 
-        toSpecify = random.randint(1, model.rule_specificity_limit)
-        if model.doExpertKnowledge:
-            i = 0
-            while len(self.specifiedAttList) < toSpecify and i < model.env.formatData.numAttributes - 1:
-                target = model.EK.EKRank[i]
-                if state[target] != None:
-                    self.specifiedAttList.append(target)
-                    self.condition.append(self.buildMatch(model,target,state))
-                i += 1
-        else:
+        toSpecify = random.randint(1, model.rule_specificity_limit) # Determines how many attributes will be part of the rule.
+
+        if model.use_midpoint_distance_filter:
+#            print("⚡ Using Midpoint Distance Filtering for Classifier Creation")
+
+#            toSpecify = model.rule_specificity_limit  # Ensure we select the full RSL number of attributes
+#            print("toSpecify / how many attributes will be part of the rule - ", toSpecify)
+            # Compute midpoints for each attribute in the dataset AFTER classifier creation
+            self.midpoints = {}
+
+            # Create the classifier by selecting features (the logic is unchanged)
             potentialSpec = random.sample(range(model.env.formatData.numAttributes),toSpecify)
             for attRef in potentialSpec:
-                if state[attRef] != None:
+                if state[attRef] is not None:
+                    # Build the condition with a random buffer and calculate midpoints
                     self.specifiedAttList.append(attRef)
                     self.condition.append(self.buildMatch(model,attRef,state))
 
+        elif model.use_feature_ranked_RSL and model.feature_importance_rank is not None:
+            self.midpoints = {}
+            randomized_percent = 50
+            # ✅ New Feature-Ranked RSL Enabled
+#            print("⚡ Using Feature-Ranked Rule Specificity Limit (RSL)")
+            toSpecify = model.rule_specificity_limit  # Ensure we select the full RSL number of attributes
+#            print("Ensure we select the full RSL number of attributes-->toSpecify", toSpecify)
+
+            if model.doExpertKnowledge:
+                i = 0
+                while len(self.specifiedAttList) < toSpecify and i < len(model.feature_importance_rank):
+                    target = model.feature_importance_rank[i]  # Pick features based on ranking
+                    if state[target] is not None:
+                        self.specifiedAttList.append(target)
+                        self.condition.append(self.buildMatch(model, target, state))
+                    i += 1
+            else:
+                # Copy the feature importance rank to a new variable
+                shuffled_feature_rank = model.feature_importance_rank.copy()                
+
+                # Shuffle the copied list
+                random.shuffle(shuffled_feature_rank)
+#                print("shuffled_feature_rank",shuffled_feature_rank)
+#                print("New toSpecify",toSpecify)
+
+                potentialSpec = shuffled_feature_rank[:toSpecify]  # Use top-ranked features
+#                potentialSpec = model.feature_importance_rank[:toSpecify]  # Use top-ranked features
+#                print("Selected fields to make the rule (Feature Ranked) --> potentialSpec ", potentialSpec)
+#                print("# of potentialSpec", len(potentialSpec))
+                ###########################################
+                RSL_50_percent = math.ceil(len(model.feature_importance_rank) * (randomized_percent / 100))  # 50% of RSL
+#                print("50% of feature importance rank is -->", RSL_50_percent )
+                randomized_rsl_features = random.sample(potentialSpec, RSL_50_percent)  # Randomly select from the top-ranked features
+#                print("randomized top 50% rsl features", randomized_rsl_features)
+
+                # Get the remaining (unselected) features
+#                print("self.all_feature_list", model.all_feature_list)
+#                print("list(self.all_feature_list)", list(model.all_feature_list))
+#                print("randomized_rsl_features",randomized_rsl_features)
+#                print("list(randomized_rsl_features)",list(randomized_rsl_features))
+                remaining_features = list(model.all_feature_list - set(randomized_rsl_features))
+#                print("remaining_features --Final",remaining_features)
+#                randomized_remaining_features = random.sample(remaining_features, 2)  # Randomly select 2 features from the entire set
+
+                # Calculate the number of features to select as remaining features
+                remaining_feature_count = len(model.feature_importance_rank) - RSL_50_percent
+#                print("remaining_feature_count", remaining_feature_count)
+                
+                # Ensure we don't sample more features than available
+                remaining_feature_count = max(0, remaining_feature_count)  # Prevent negative values
+#                print("Prevent negative -->remaining_feature_count",remaining_feature_count)
+                
+                # Randomly select the remaining features dynamically
+                randomized_remaining_features = random.sample(remaining_features, remaining_feature_count)
+#                print("Randomly select remaining features",randomized_remaining_features)
+                
+#                print("randomized_remaining_features", randomized_remaining_features)
+
+                # Combine the randomized features
+                final_selected_features = randomized_rsl_features + randomized_remaining_features
+#                print("final_selected_features",final_selected_features)
+                ###########################################
+                
+#                for attRef in potentialSpec:
+                for attRef in final_selected_features: # modified to get from Combined the randomized features
+                    if state[attRef] is not None:
+                        self.specifiedAttList.append(attRef)
+                        self.condition.append(self.buildMatch(model, attRef, state))
+        else:
+            # ✅ Original Method: Standard Attribute Selection
+            if model.doExpertKnowledge:
+                i = 0
+                while len(self.specifiedAttList) < toSpecify and i < model.env.formatData.numAttributes - 1:
+                    target = model.EK.EKRank[i] # Use expert knowledge ranking
+                    if state[target] != None:
+                        self.specifiedAttList.append(target)
+                        self.condition.append(self.buildMatch(model,target,state))
+                    i += 1
+            else:
+#                print("model.rule_specificity_limit", model.rule_specificity_limit)
+                #print("toSpecify-toSpecify BEFORE", toSpecify)
+                #print("TYPE toSpecify", type(toSpecify))
+                potentialSpec = random.sample(range(model.env.formatData.numAttributes),toSpecify)
+#                print("Selected fields to make the rule (Random-->potentialSpec) -",potentialSpec)
+    
+                for attRef in potentialSpec:
+                    if state[attRef] != None:
+                        self.specifiedAttList.append(attRef)
+                        self.condition.append(self.buildMatch(model,attRef,state))
+#        print(f"✅ Final selected attributes: {self.condition}")
+#        print("model.midpoints", model.midpoints)
+
     def buildMatch(self,model,attRef,state):
         attributeInfoType = model.env.formatData.attributeInfoType[attRef]
-        if not (attributeInfoType):  # Discrete
+        if not (attributeInfoType):  # Discrete -->False
             attributeInfoValue = model.env.formatData.attributeInfoDiscrete[attRef]
-        else:
+        else:                        # Continuous -->True
             attributeInfoValue = model.env.formatData.attributeInfoContinuous[attRef]
 
-        if attributeInfoType: #Continuous Attribute
-            attRange = attributeInfoValue[1] - attributeInfoValue[0]
-            rangeRadius = random.randint(25, 75) * 0.01 * attRange / 2.0  # Continuous initialization domain radius.
-            Low = state[attRef] - rangeRadius
-            High = state[attRef] + rangeRadius
-            condList = [Low, High]
-        else:
-            condList = state[attRef]
-        return condList
+        if model.use_midpoint_distance_filter or model.use_feature_ranked_RSL:
 
-    def updateEpochStatus(self,model):
+            if attributeInfoType: #Continuous Attribute
+                attRange = attributeInfoValue[1] - attributeInfoValue[0] # calculates a range (low & high values)
+#                rangeRadius = random.randint(25, 75) * 0.01 * attRange / 2.0  # Continuous initialization domain radius.
+#                random.seed(42)  # Fixing the seed
+                # Add a random buffer to the range (upper and lower bounds)
+#                buffer_low = random.uniform(-0.1, 0.1) * attRange  # Random buffer for the lower bound
+#                buffer_high = random.uniform(0.1, 0.2) * attRange  # Random buffer for the upper bound
+
+                buffer_low = random.random() * 0.35  # Random buffer for the lower bound
+                buffer_high = random.random() * 0.35  # Random buffer for the upper bound
+
+#                print("attributeInfoValue[1]", attributeInfoValue[1])
+#                print("attributeInfoValue[0]", attributeInfoValue[0])
+#                print("attRange", attRange)
+#                print("random.uniform for buffer_low", random.uniform)
+#                print("buffer_low",buffer_low)
+#                print("buffer_high",buffer_high)
+
+                # Compute lower and upper bounds with added random buffer
+#                Low = state[attRef] - rangeRadius - buffer_low
+#                High = state[attRef] + rangeRadius + buffer_high
+                Low = state[attRef] - buffer_low
+                High = state[attRef] + buffer_high
+#                print("state[attRef]",state[attRef])
+#                print("rangeRadius",rangeRadius)
+#                print("buffer_low",buffer_low)
+#                print("buffer_high",buffer_high)
+#                print("Low",Low)
+#                print("High",High)
+
+                # Compute midpoint as the average of the lower and upper bounds
+                midpoint = (Low + High) / 2
+#                print("midpoint",midpoint)
+
+                # 🔹 Check if midpoint is None and log it
+                if midpoint is None:
+#                    print(f"Logging None midpoint: state={state},attRef={attRef},Low{Low},High{High}")
+                    self.log_none_midpoints(attRef, state)
+#                    print("attRef is", attRef)
+#                    print("Low",Low)
+#                    print("High",High)
+                else:
+                    # Store midpoint for later use (for distance calculations)
+                    model.midpoints[attRef] = midpoint
+     
+                condList = [Low, High]
+            else:  # Discrete Attribute -->False
+                condList = state[attRef]  # Directly assigns a value
+
+#                print("state[attRef]",state[attRef])
+                midpoint = state[attRef] / 2
+#                print("Discrete", state[attRef])
+#                print("Discrete - midpoint",midpoint)
+
+                # 🔹 Check if midpoint is None and log it
+                if midpoint is None:
+#                    print(f"Logging None midpoint: state{state},attRef={attRef}, state={state}")
+                    self.log_none_midpoints(attRef, state)
+                else:
+                    # Store midpoint for later use (for distance calculations)
+                    model.midpoints[attRef] = midpoint
+#                    print("condList", condList)
+            return condList   
+        else:
+            if attributeInfoType: #Continuous Attribute -->True
+                attRange = attributeInfoValue[1] - attributeInfoValue[0] # calculates a range (low & high values)
+                rangeRadius = random.randint(25, 75) * 0.01 * attRange / 2.0  # Continuous initialization domain radius.
+                Low = state[attRef] - rangeRadius
+                High = state[attRef] + rangeRadius
+                condList = [Low, High]
+            else:
+                condList = state[attRef] # directly assigns a value
+            return condList
+
+    def updateEpochStatus(self,model): # checks whether a classifier (rule) has completed an epoch (i.e., has seen the entire training dataset at least once)
         if not self.epochComplete and (model.iterationCount - self.initTimeStamp - 1) >= model.env.formatData.numTrainInstances:
             self.epochComplete = True
+#            print("self.epochComplete -", self.epochComplete)
+#            print("model.iterationCount -", model.iterationCount)
+#            print("self.initTimeStamp -", self.initTimeStamp)
 
     def match(self, model, state):
-        for i in range(len(self.condition)):
+        for i in range(len(self.condition)): # Loop through each condition (the loop runs 6 times because self.condition has 6 elements - [0.0, [-0.5700000000000038, 40.730000000000004], [-136.39999999999998, 536.4], [5.75, 12.25], [-7.245, 7.245], 1.0]
             specifiedIndex = self.specifiedAttList[i]
-            attributeInfoType = model.env.formatData.attributeInfoType[specifiedIndex]
-            # Continuous
-            if attributeInfoType:
+            attributeInfoType = model.env.formatData.attributeInfoType[specifiedIndex] # Checks if the attribute is continuous (True) or discrete (False).
+            # Continuous --> True
+            if attributeInfoType:                     # Continuous Attribute
                 instanceValue = state[specifiedIndex]
                 if instanceValue == None:
                     return False
                 elif self.condition[i][0] < instanceValue < self.condition[i][1]:
+#                    print("self.condition[i][0]", self.condition[i][0])
+#                    print("instanceValue", instanceValue)
+#                    print("self.condition[i][1]", self.condition[i][1])
                     pass
                 else:
                     return False
 
-            # Discrete
+            # Discrete --> False
             else:
                 stateRep = state[specifiedIndex]
                 if stateRep == self.condition[i]:
@@ -299,8 +468,12 @@ class Classifier:
         """  Sets the fitness of the classifier. """
         self.fitness = fit
 
-    def mutation(self,model,state):
-        """ Mutates the condition of the classifier. Also handles phenotype mutation. This is a niche mutation, which means that the resulting classifier will still match the current instance.  """
+    def mutation(self, model, state):
+        """ 
+        Mutates the condition of the classifier. Also handles phenotype mutation.
+        This is a niche mutation, ensuring the classifier still matches the current instance.
+        """
+    
         pressureProb = 0.5  # Probability that if EK is activated, it will be applied.
         useAT = model.do_attribute_feedback and random.random() < model.AT.percent
         changed = False
@@ -327,42 +500,79 @@ class Classifier:
 
         # Get new rule specificity.
         newRuleSpec = random.randint(lowLim, highLim)
-
-        # MAINTAIN SPECIFICITY
-        if newRuleSpec == len(self.specifiedAttList) and random.random() < (1 - model.mu):
-            #Remove random condition element
-            if not model.doExpertKnowledge or random.random() > pressureProb:
-                genTarget = random.sample(self.specifiedAttList,1)
-            else:
-                genTarget = self.selectGeneralizeRW(model,1)
-
-            attributeInfoType = model.env.formatData.attributeInfoType[genTarget[0]]
-            if not attributeInfoType or random.random() > 0.5:
-                if not useAT or random.random() > model.AT.getTrackProb()[genTarget[0]]:
-                    # Generalize Target
-                    i = self.specifiedAttList.index(genTarget[0])  # reference to the position of the attribute in the rule representation
-                    self.specifiedAttList.remove(genTarget[0])
-                    self.condition.pop(i)  # buildMatch handles both discrete and continuous attributes
-                    changed = True
-            else:
-                self.mutateContinuousAttributes(model,useAT, genTarget[0])
-
-            #Add random condition element
-            if len(self.specifiedAttList) >= len(state):
-                pass
-            else:
+    
+        # ✅ NEW: Use Ranked Features if `use_feature_ranked_RSL` is ON
+        if model.use_feature_ranked_RSL and model.feature_importance_rank is not None:
+            #print("⚡ Using Feature-Ranked Rule Specificity Limit (RSL) for Mutation")
+    
+            ranked_features = model.feature_importance_rank  # Ranked list of features
+    
+            # MAINTAIN SPECIFICITY
+            if newRuleSpec == len(self.specifiedAttList) and random.random() < (1 - model.mu):
+                # Remove a feature based on ranking
                 if not model.doExpertKnowledge or random.random() > pressureProb:
-                    pickList = list(range(model.env.formatData.numAttributes))
-                    for i in self.specifiedAttList:
-                        pickList.remove(i)
-                    specTarget = random.sample(pickList,1)
+                    genTarget = random.sample(self.specifiedAttList, 1)  # Select randomly
                 else:
-                    specTarget = self.selectSpecifyRW(model,1)
-
-                if state[specTarget[0]] != None and (not useAT or random.random() < model.AT.getTrackProb()[specTarget[0]]):
-                    self.specifiedAttList.append(specTarget[0])
-                    self.condition.append(self.buildMatch(model,specTarget[0],state))  # buildMatch handles both discrete and continuous attributes
-                    changed = True
+                    genTarget = self.selectGeneralizeRW(model, 1)  # Use EK-based selection
+    
+                if genTarget[0] in ranked_features:  # Ensure removal is from ranked list
+                    attributeInfoType = model.env.formatData.attributeInfoType[genTarget[0]]
+                    if not attributeInfoType or random.random() > 0.5:
+                        if not useAT or random.random() > model.AT.getTrackProb()[genTarget[0]]:
+                            i = self.specifiedAttList.index(genTarget[0])
+                            self.specifiedAttList.remove(genTarget[0])
+                            self.condition.pop(i)
+                            changed = True
+                    else:
+                        self.mutateContinuousAttributes(model, useAT, genTarget[0])
+    
+                # Add a ranked feature
+                if len(self.specifiedAttList) < len(state):
+                    available_features = [f for f in ranked_features if f not in self.specifiedAttList]
+                    if available_features:
+                        specTarget = available_features[:1]  # Select top-ranked available feature
+                        if state[specTarget[0]] is not None:
+                            self.specifiedAttList.append(specTarget[0])
+                            self.condition.append(self.buildMatch(model, specTarget[0], state))
+                            changed = True
+    
+                if len(self.specifiedAttList) > model.rule_specificity_limit:
+                    self.specLimitFix(model, self)
+    
+        else:  # 🔄 FALLBACK TO ORIGINAL LOGIC
+            # MAINTAIN SPECIFICITY
+            if newRuleSpec == len(self.specifiedAttList) and random.random() < (1 - model.mu):
+                # Remove random condition element
+                if not model.doExpertKnowledge or random.random() > pressureProb:
+                    genTarget = random.sample(self.specifiedAttList, 1)
+                else:
+                    genTarget = self.selectGeneralizeRW(model, 1)
+    
+                attributeInfoType = model.env.formatData.attributeInfoType[genTarget[0]]
+                if not attributeInfoType or random.random() > 0.5:
+                    if not useAT or random.random() > model.AT.getTrackProb()[genTarget[0]]:
+                        i = self.specifiedAttList.index(genTarget[0])  # Find position
+                        self.specifiedAttList.remove(genTarget[0])
+                        self.condition.pop(i)
+                        changed = True
+                else:
+                    self.mutateContinuousAttributes(model, useAT, genTarget[0])
+    
+                # Add random condition element
+                if len(self.specifiedAttList) < len(state):
+                    if not model.doExpertKnowledge or random.random() > pressureProb:
+                        pickList = list(range(model.env.formatData.numAttributes))
+                        for i in self.specifiedAttList:
+                            pickList.remove(i)
+                        specTarget = random.sample(pickList, 1)
+                    else:
+                        specTarget = self.selectSpecifyRW(model, 1)
+    
+                    if state[specTarget[0]] is not None and (not useAT or random.random() < model.AT.getTrackProb()[specTarget[0]]):
+                        self.specifiedAttList.append(specTarget[0])
+                        self.condition.append(self.buildMatch(model, specTarget[0], state))
+                        changed = True
+    
                 if len(self.specifiedAttList) > model.rule_specificity_limit:
                     self.specLimitFix(model,self)
 
@@ -377,7 +587,7 @@ class Classifier:
             else:
                 specTarget = self.selectSpecifyRW(model,change)
             for j in specTarget:
-                if state[j] != None and (not useAT or random.random() < model.AT.getTrackProb()[j]):
+                    if state[j] is not None and (not useAT or random.random() < model.AT.getTrackProb()[j]):
                     #Specify Target
                     self.specifiedAttList.append(j)
                     self.condition.append(self.buildMatch(model,j, state)) #buildMatch handles both discrete and continuous attributes
@@ -552,3 +762,26 @@ class Classifier:
         else:
             deletionVote = self.aveMatchSetSize * self.numerosity * meanFitness / (self.fitness / self.numerosity)
         return deletionVote
+
+   
+
+    def calculateEuclideanDistance(self, model, state):
+        """ Calculate Euclidean distance between the current classifier's condition and a given state. """
+        distance = 0
+        for i, attRef in enumerate(self.specifiedAttList):
+
+            # Retrieve the midpoint for the current attribute from the pre-calculated midpoints
+            midpoint = model.midpoints.get(attRef, None)
+#            print(f"midpoint of {attRef} is {midpoint}")            
+
+            if midpoint is not None:
+                # Calculate squared difference (Euclidean distance for each attribute)
+                distance += (state[attRef] - midpoint) ** 2
+            else:
+                # If midpoint is not available, handle the case (perhaps skip the attribute or handle differently)
+                print(f"Warning: Midpoint for attribute {attRef} not found. State{state}")
+#                print("state is", state)
+    
+        # Return the square root of the sum of squared differences
+#        print("SQRT of distance-->",distance ** 0.5)
+        return distance ** 0.5

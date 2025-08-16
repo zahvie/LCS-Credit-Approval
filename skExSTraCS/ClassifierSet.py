@@ -2,6 +2,7 @@
 from skExSTraCS.Classifier import Classifier
 import copy
 import random
+import sys
 
 class ClassifierSet:
     def __init__(self):
@@ -9,6 +10,8 @@ class ClassifierSet:
         self.matchSet = []  # List of references to rules in population that match
         self.correctSet = []  # List of references to rules in population that both match and specify correct phenotype
         self.microPopSize = 0
+        self.last_valid_correctSet = []
+        self.last_valid_correctSet_age = 0
 
     def makeMatchSet(self,model,state_phenotype):
         state = state_phenotype[0]
@@ -34,11 +37,42 @@ class ClassifierSet:
         while doCovering:
             newCl = Classifier(model)
             newCl.initializeByCovering(model,setNumerositySum+1,state,phenotype)
-            if len(newCl.specifiedAttList) > 0: #ADDED CHECK TO PREVENT FULLY GENERALIZED RULES
-                self.addClassifierToPopulation(model,newCl,True)
-                self.matchSet.append(len(self.popSet)-1)
-                model.trackingObj.coveringCount += 1
-                doCovering = False
+
+                
+            if model.use_midpoint_distance_filter or model.use_feature_ranked_RSL:  # Check if the midpoint distance filter is enabled
+                if len(newCl.specifiedAttList) > 0: #ADDED CHECK TO PREVENT FULLY GENERALIZED RULES
+                    self.addClassifierToPopulation(model,newCl,True)
+
+                    distance = newCl.calculateEuclideanDistance(model,state) # Calculate the Euclidean distance to the current state (for the new classifier)
+                    model.classifier_distance = distance
+                    model.trackingObj.classifier_distance = distance
+#                    print("newCl distance is----->",distance)
+#                    print("newCl distance is----->model.classifier_distance = ",model.classifier_distance)
+                    # Allow the first rule through unconditionally and Compare the distance to the threshold
+#                    print("model.distance_threshold--",model.distance_threshold)
+                    #model.distance_threshold == 0 or 
+                    if model.distance_threshold == 0 or distance < model.distance_threshold:
+                        # If the distance is smaller than the threshold, create the rule as usual
+
+                        self.matchSet.append(len(self.popSet)-1)
+                        model.trackingObj.coveringCount += 1
+                        if model.distance_threshold == 0:
+                            model.distance_threshold = distance
+                            model.trackingObj.distance_threshold = model.distance_threshold
+                        doCovering = False
+                    else:
+                        # Introduce a 10% buffer to the threshold before updating it
+                        model.distance_threshold = distance + (0.1 * distance)  # Add a 10% buffer
+                        model.trackingObj.distance_threshold = model.distance_threshold
+                        doCovering = False
+#                        print(f"*****model.distance_threshold is {model.distance_threshold}")
+            else:
+                # If the midpoint distance filter is not enabled, just proceed with the usual logic
+                if len(newCl.specifiedAttList) > 0:  # ADDED CHECK TO PREVENT FULLY GENERALIZED RULES
+                    self.addClassifierToPopulation(model, newCl, True)
+                    self.matchSet.append(len(self.popSet) - 1)
+                    model.trackingObj.coveringCount += 1
+                    doCovering = False
         model.timer.stopTimeCovering()
 
     def addClassifierToPopulation(self,model,cl,covering):
@@ -65,6 +99,12 @@ class ClassifierSet:
             ref = self.matchSet[i]
             if self.popSet[ref].phenotype == phenotype:
                 self.correctSet.append(ref)
+
+                if len(self.correctSet) > 0:
+                    self.last_valid_correctSet = self.correctSet.copy()
+                    self.last_valid_correctSet_age = 0  # Reset age when updated
+                else:
+                    self.last_valid_correctSet_age += 1  # Increase age if no new correct set
 
     def updateSets(self,model):
         """ Updates all relevant parameters in the current match and correct sets. """
@@ -256,16 +296,37 @@ class ClassifierSet:
     def selectClassifierT(self,model):
         selectList = [None, None]
         currentCount = 0
-        setList = self.correctSet
+#        setList = self.correctSet
 
+#        setList = self.correctSet if len(self.correctSet) > 0 else self.last_valid_correctSet
+
+        if len(self.correctSet) == 0:
+            if self.last_valid_correctSet_age <= 3:  # Example: accept if not older than 3 iterations
+                print("⚠️ correctSet is empty. Using recent backup (age:", self.last_valid_correctSet_age, ")")
+                setList = self.last_valid_correctSet
+            else:
+                print("❌ Backup correctSet is too old. Aborting selection.")
+                return [None, None]  # Or handle as fallback case
+        else:
+            setList = self.correctSet
+
+#        print("*********# of Corret Classifiers selected",len(setList))
+#        print("Correct Set List -->",setList)
+        
+        if hasattr(sys, 'gettrace') and sys.gettrace():
+            if len(setList) == 0:
+                    breakpoint()  # Stops here for inspection
         while currentCount < 2:
-            tSize = int(len(setList) * model.theta_sel)
 
+#            tSize = int(len(setList) * model.theta_sel)
+            tSize = max(1, int(len(setList) * model.theta_sel))  # Ensure tSize is at least 1
             #Select tSize elements from correctSet
             posList = random.sample(setList,tSize)
 
             bestF = 0
-            bestC = self.correctSet[0]
+#            bestC = self.correctSet[0]
+            bestC = setList[0]
+
             for j in posList:
                 if self.popSet[j].fitness > bestF:
                     bestF = self.popSet[j].fitness
