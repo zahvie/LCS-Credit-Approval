@@ -42,6 +42,7 @@ class Classifier:
         self.aveMatchSetSize = setSize
         self.phenotype = phenotype
 
+#        print("model.rule_specificity_limit / # of Attributes selected - ", model.rule_specificity_limit)
         toSpecify = random.randint(1, model.rule_specificity_limit) # Determines how many attributes will be part of the rule.
 
         if model.use_midpoint_distance_filter:
@@ -54,11 +55,13 @@ class Classifier:
 
             # Create the classifier by selecting features (the logic is unchanged)
             potentialSpec = random.sample(range(model.env.formatData.numAttributes),toSpecify)
+#            print("Selected Attributes",potentialSpec)
+
             for attRef in potentialSpec:
                 if state[attRef] is not None:
                     # Build the condition with a random buffer and calculate midpoints
                     self.specifiedAttList.append(attRef)
-                    self.condition.append(self.buildMatch(model,attRef,state))
+                    self.condition.append(self.buildMatch(model, attRef, state))  
 
         elif model.use_feature_ranked_RSL and model.feature_importance_rank is not None:
             self.midpoints = {}
@@ -331,9 +334,9 @@ class Classifier:
             # Continuous
             if attributeInfoType:
                 otherRef = cl.specifiedAttList.index(self.specifiedAttList[i])
-                if self.condition[i][0] > cl.condition[otherRef][0]:
+                if self.condition[i][0] < cl.condition[otherRef][0]:
                     return False
-                if self.condition[i][1] < cl.condition[otherRef][1]:
+                if self.condition[i][1] > cl.condition[otherRef][1]:
                     return False
         return True
 
@@ -425,6 +428,7 @@ class Classifier:
         #Specification Limit Check
         if len(self.specifiedAttList) > model.rule_specificity_limit:
             self.specLimitFix(model,self)
+
         if len(cl.specifiedAttList) > model.rule_specificity_limit:
             self.specLimitFix(model,cl)
 
@@ -477,7 +481,7 @@ class Classifier:
         pressureProb = 0.5  # Probability that if EK is activated, it will be applied.
         useAT = model.do_attribute_feedback and random.random() < model.AT.percent
         changed = False
-
+    
         steps = 0
         keepGoing = True
         while keepGoing:
@@ -485,20 +489,22 @@ class Classifier:
                 steps += 1
             else:
                 keepGoing = False
-
+    
         # Define Spec Limits
         if (len(self.specifiedAttList) - steps) <= 1:
             lowLim = 1
         else:
             lowLim = len(self.specifiedAttList) - steps
+    
         if (len(self.specifiedAttList) + steps) >= model.rule_specificity_limit:
             highLim = model.rule_specificity_limit
         else:
             highLim = len(self.specifiedAttList) + steps
+    
         if len(self.specifiedAttList) == 0:
             highLim = 1
-
-        # Get new rule specificity.
+    
+        # Get new rule specificity
         newRuleSpec = random.randint(lowLim, highLim)
     
         # ✅ NEW: Use Ranked Features if `use_feature_ranked_RSL` is ON
@@ -574,49 +580,47 @@ class Classifier:
                         changed = True
     
                 if len(self.specifiedAttList) > model.rule_specificity_limit:
-                    self.specLimitFix(model,self)
-
-        #Increase Specificity
-        elif newRuleSpec > len(self.specifiedAttList): #Specify more attributes
-            change = newRuleSpec - len(self.specifiedAttList)
-            if not model.doExpertKnowledge or random.random() > pressureProb:
-                pickList = list(range(model.env.formatData.numAttributes))
-                for i in self.specifiedAttList: # Make list with all non-specified attributes
-                    pickList.remove(i)
-                specTarget = random.sample(pickList,change)
-            else:
-                specTarget = self.selectSpecifyRW(model,change)
-            for j in specTarget:
-                    if state[j] is not None and (not useAT or random.random() < model.AT.getTrackProb()[j]):
-                    #Specify Target
-                    self.specifiedAttList.append(j)
-                    self.condition.append(self.buildMatch(model,j, state)) #buildMatch handles both discrete and continuous attributes
-                    changed = True
-
-        #Decrease Specificity
-        elif newRuleSpec < len(self.specifiedAttList): # Generalize more attributes.
-            change = len(self.specifiedAttList) - newRuleSpec
-            if not model.doExpertKnowledge or random.random() > pressureProb:
-                genTarget = random.sample(self.specifiedAttList,change)
-            else:
-                genTarget = self.selectGeneralizeRW(model,change)
-
-            #-------------------------------------------------------
-            # DISCRETE OR CONTINUOUS ATTRIBUTE - remove attribute specification with 50% chance if we have continuous attribute, or 100% if discrete attribute.
-            #-------------------------------------------------------
-            for j in genTarget:
-                attributeInfoType = model.env.formatData.attributeInfoType[j]
-                if not attributeInfoType or random.random() > 0.5: #GEN/SPEC OPTION
-                    if not useAT or random.random() > model.AT.getTrackProb()[j]:
-                        i = self.specifiedAttList.index(j) #reference to the position of the attribute in the rule representation
-                        self.specifiedAttList.remove(j)
-                        self.condition.pop(i) #buildMatch handles both discrete and continuous attributes
-                        changed = True
+                    self.specLimitFix(model, self)
+    
+            # Increase Specificity
+            elif newRuleSpec > len(self.specifiedAttList):
+                change = newRuleSpec - len(self.specifiedAttList)
+                if not model.doExpertKnowledge or random.random() > pressureProb:
+                    pickList = list(range(model.env.formatData.numAttributes))
+                    for i in self.specifiedAttList:
+                        pickList.remove(i)
+                    specTarget = random.sample(pickList, change)
                 else:
-                    self.mutateContinuousAttributes(model,useAT,j)
-
+                    specTarget = self.selectSpecifyRW(model, change)
+    
+                for j in specTarget:
+                    if state[j] is not None and (not useAT or random.random() < model.AT.getTrackProb()[j]):
+                        self.specifiedAttList.append(j)
+                        self.condition.append(self.buildMatch(model, j, state))
+                        changed = True
+    
+            # Decrease Specificity
+            elif newRuleSpec < len(self.specifiedAttList):
+                change = len(self.specifiedAttList) - newRuleSpec
+                if not model.doExpertKnowledge or random.random() > pressureProb:
+                    genTarget = random.sample(self.specifiedAttList, change)
+                else:
+                    genTarget = self.selectGeneralizeRW(model, change)
+    
+                for j in genTarget:
+                    attributeInfoType = model.env.formatData.attributeInfoType[j]
+                    if not attributeInfoType or random.random() > 0.5:
+                        if not useAT or random.random() > model.AT.getTrackProb()[j]:
+                            i = self.specifiedAttList.index(j)
+                            self.specifiedAttList.remove(j)
+                            self.condition.pop(i)
+                            changed = True
+                    else:
+                        self.mutateContinuousAttributes(model, useAT, j)
+    
         return changed
-
+        
+        
     def selectGeneralizeRW(self,model,count):
         probList = []
         for attribute in self.specifiedAttList:
