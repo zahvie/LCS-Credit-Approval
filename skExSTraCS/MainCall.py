@@ -3,32 +3,65 @@ Created on Dec 16, 2024
 
 @author: MSII
 '''
-import unittest
 from skExSTraCS import ExSTraCS,StringEnumerator
 import os
-import logging
-from datetime import datetime
 import csv
+from datetime import datetime
 import time
-from sympy.logic.boolalg import false
-import numpy as np
+from pathlib import Path
 
-THIS_DIR = os.path.dirname(os.path.abspath("test_ExSTraCS.py"))
-print('THIS_DIR 1', THIS_DIR)
-if THIS_DIR[-4:] == 'test': #Patch that ensures testing from Scikit not test directory
-    print('THIS_DIR[-4:]', THIS_DIR[-4:])
-    THIS_DIR = THIS_DIR[:-5]
-    print('THIS_DIR[:-5]', THIS_DIR[:-5])
+try:
+    import google.colab
+    in_colab = True
+except ImportError:
+    in_colab = False
+
+print("Running in Google Colab?", in_colab)
+
+
+# Default: local file path (Windows)
+train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan Approval Data\train_Loan_Approval_Data.csv'
+test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan Approval Data\test_Loan_Approval_Data.csv'
+
+# Alternative: Colab path
+train_colab_path = "/content/repo/data/LAD/train_Loan_Approval_Data.csv"
+test_colab_path = "/content/repo/data/LAD/test_Loan_Approval_Data.csv"
     
 
-#dataPath = os.path.join(THIS_DIR, "test/DataSets/Real/Multiplexer20Modified.csv")
-#dataPath = os.path.join(THIS_DIR, "test/DataSets/Real/modified_german_credit_data.csv")
-dataPath = os.path.join(THIS_DIR, "test/DataSets/Real/CredApp.csv")
-print('dataPath', dataPath)
+# Decide which one to use
+if in_colab:
+    if os.path.exists(train_colab_path):
+        print("✅ Running in Colab & train file exists:", train_colab_path)
+        train_file_path = train_colab_path
+        print("OS Path",os.path.exists(train_file_path))
+        print("Google Colab file is used", in_colab)
+    else:
+        print("⚠ Running in Colab but train file not found:", train_file_path)
+        train_file_path = train_file
+        print("OS Path",train_file_path)
 
-# Get the current date and time for the filename
-#current_time = datetime.now().strftime('%Y-%m-%d_%H-%M')  # Format: 2024-12-07_18-36
+    if os.path.exists(test_colab_path):
+        print("✅ Running in Colab & test file exists:", test_colab_path)
+        test_file_path = test_colab_path
+        print("OS Path",os.path.exists(test_file_path))
+        print("Google Colab file is used", in_colab)
+    else:
+        print("⚠ Running in Colab but test file not found:", train_file_path)
+        test_file_path = test_file
+        print("OS Path",test_file_path)
+else:
+    print("⚠ Running in Colab but file not found:", train_colab_path)
+    print("⚠ Running in Colab but file not found:", test_colab_path)
+    train_file_path = train_file
+    test_file_path = test_file
+    print("OS Path",train_file_path)
+    print("OS Path",test_file_path)
+    print("💻 Not running in Colab")
 
+
+
+
+'''
 log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
 #log_trainingfile_name = f"log_training_{current_time}.txt"  # Name the log file with the current time
 #log_file_path = os.path.join(log_dir, log_trainingfile_name)
@@ -135,7 +168,7 @@ if not os.path.exists(results_file):
         writer = csv.writer(file)
         writer.writerow(['Iteration', 'Population Size', 'Fitness', 'Crossover', 'Mutating', 'Training Accuracy',
                           'Testing Accuracy', 'Specificity', 'Data File Name'])
-''' 
+
 # Dynamically create a new log file for each iteration change
 
 current_time_for_file = datetime.now().strftime('%Y-%m-%d_%H-%M')  # Include seconds for uniqueness
@@ -143,14 +176,6 @@ log_trainingfile_name = f"log_training_{current_time_for_file}.txt"  # Name the 
 log_file_path = os.path.join(log_dir, log_trainingfile_name)
 
 
-# Set up logging for the current iteration (Remove old handlers to avoid appending)
-logger = logging.getLogger()  # Get the root logger
-for handler in logger.handlers[:]:
-    logger.removeHandler(handler)  # Remove all existing handlers
-logging.basicConfig(filename=log_file_path, level=logging.INFO, 
-                    format='%(message)s')
-logger = logging.getLogger(__name__)  # Recreate the logger instance after removing handlers
-'''
  
 last_iterations = 100
 max_iterations = 1000
@@ -231,3 +256,4 @@ else:
 # Once the loop ends, the script will stop if learning_iterations >= 1,000,001
 print("Maximum learning_iterations reached. Stopping execution.")
 
+'''
