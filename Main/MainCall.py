@@ -34,7 +34,7 @@ if in_colab:
         print("✅ Running in Colab & train file exists:", train_colab_path)
         train_file_path = train_colab_path
         print("OS Path",os.path.exists(train_file_path))
-        print("Google Colab file is used", in_colab)
+        print("Google Colab train file is used", in_colab)
     else:
         print("⚠ Running in Colab but train file not found:", train_file_path)
         train_file_path = train_file
@@ -44,22 +44,35 @@ if in_colab:
         print("✅ Running in Colab & test file exists:", test_colab_path)
         test_file_path = test_colab_path
         print("OS Path",os.path.exists(test_file_path))
-        print("Google Colab file is used", in_colab)
+        print("Google Colab train file is used", in_colab)
     else:
         print("⚠ Running in Colab but test file not found:", train_file_path)
         test_file_path = test_file
         print("OS Path",test_file_path)
 else:
-    print("⚠ Running in Colab but file not found:", train_colab_path)
-    print("⚠ Running in Colab but file not found:", test_colab_path)
+    print("⚠ Running using Physical train file:", train_file)
+    print("⚠ Running using Physical test file:", test_file)
     train_file_path = train_file
     test_file_path = test_file
-    print("OS Path",train_file_path)
-    print("OS Path",test_file_path)
+    print("OS train Path",train_file_path)
+    print("OS test Path",test_file_path)
     print("💻 Not running in Colab")
 
 
+# Default: local log path (Windows)
+log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
 
+# Alternative: Colab log path
+colab_log_dir = '/content/repo/logs'
+
+
+if in_colab:
+    if os.path.exists(colab_log_dir):
+        print("✅ Running in Colab & log directory exists:", colab_log_dir)
+    else:
+        print("⚠ Running in Colab but log directory not found:", colab_log_dir)
+else:
+    print("⚠ Running using Physical log directory:", log_dir)
 
 '''
 log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
