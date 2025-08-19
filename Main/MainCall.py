@@ -107,7 +107,7 @@ print('train file path is -->',train_file_path)
 
 train_converter = StringEnumerator(train_file_path,'Class')
 train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = train_converter.get_params()
-print(train_dataFeatures, train_dataPhenotypes)
+#print(train_dataFeatures, train_dataPhenotypes)
 #print("Debugging: Features Loaded - train_dataFeatures", train_dataFeatures[:5])
 #print("Training Data Shape:", train_dataFeatures.shape)
 
@@ -142,7 +142,7 @@ if not os.path.exists(results_file):
 # Dynamically create a new log file for each iteration change
 
 current_time_for_file = datetime.now().strftime('%Y-%m-%d_%H-%M')  # Include seconds for uniqueness
-#log_trainingfile_name = f"log_training_{current_time_for_file}.txt"  # Name the log file with learning_iterations and timestamp
+log_trainingfile_name = f"log_training_{current_time_for_file}.txt"  # Name the log file with learning_iterations and timestamp
 log_file_path = os.path.join(log_dir_path, log_trainingfile_name)
 
 
