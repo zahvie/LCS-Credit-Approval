@@ -118,7 +118,8 @@ print(train_dataFeatures, train_dataPhenotypes)
 
 
 # Prepare the results file with headers
-results_file = os.path.join(log_dir, 'testing_results.csv')
+results_file = os.path.join(log_dir_path, 'testing_results.csv')
+print('results_file path is -->',results_file )
 
 # Extract the data file name (without extension) from the training file path
 data_file_name = os.path.splitext(os.path.basename(train_file_path))[0]
@@ -141,8 +142,8 @@ if not os.path.exists(results_file):
 # Dynamically create a new log file for each iteration change
 
 current_time_for_file = datetime.now().strftime('%Y-%m-%d_%H-%M')  # Include seconds for uniqueness
-log_trainingfile_name = f"log_training_{current_time_for_file}.txt"  # Name the log file with learning_iterations and timestamp
-log_file_path = os.path.join(log_dir, log_trainingfile_name)
+#log_trainingfile_name = f"log_training_{current_time_for_file}.txt"  # Name the log file with learning_iterations and timestamp
+log_file_path = os.path.join(log_dir_path, log_trainingfile_name)
 
 
  
