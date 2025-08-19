@@ -174,7 +174,7 @@ model = ExSTraCS(learning_iterations=max_iterations, N=N, nu=10, log_dir=log_dir
 print("Model training in progress ...")
 
 # Train the model
-print(Calling model.fit -->',model.fit)
+print('Calling model.fit -->',model.fit)
 model.fit(model,train_dataFeatures, train_dataPhenotypes)
 print("Model training Ends")
 
