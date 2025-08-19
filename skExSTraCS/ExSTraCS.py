@@ -78,7 +78,7 @@ class ExSTraCS(BaseEstimator, ClassifierMixin):
         :param feature_selection_percentage:Must be a float. Use to calculate a feature_selection_percentage
         '''
 
-        print("Log Dir Name - ", log_dir)
+        print("Log Dir Name --> ", log_dir)
 
         # learning_iterations
         if not self.checkIsInt(learning_iterations):
