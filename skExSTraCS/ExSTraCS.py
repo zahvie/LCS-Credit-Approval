@@ -24,7 +24,7 @@ from sympy.logic.boolalg import false
 
 # from Cython.Includes.cpython import type
 
-log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
+#log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
 print('New Development Source')
 
 class ExSTraCS(BaseEstimator, ClassifierMixin):
@@ -34,7 +34,7 @@ class ExSTraCS(BaseEstimator, ClassifierMixin):
                  do_correct_set_subsumption=False, do_GA_subsumption=True, selection_method='tournament', do_attribute_tracking=False,
                  do_attribute_feedback=False, attribute_tracking_method='add', attribute_tracking_beta=0.1, expert_knowledge=None,
                  rule_compaction='QRF', reboot_filename=None, discrete_attribute_limit=10, specified_attributes=np.array([]),
-                 track_accuracy_while_fit=True, random_state=None, total_patches=25, patch_len=-1, init_best_pop=False, log_dir=log_dir,
+                 track_accuracy_while_fit=True, random_state=None, total_patches=25, patch_len=-1, init_best_pop=False, log_dir,
                  use_feature_ranked_RSL=False, log_trainingfile_name="log_trainingfile_name.csv", log_popfile_name="",
                  feature_selection_percentage=0.75, all_feature_list=None, use_midpoint_distance_filter=False, midpoints={},
                  distance_threshold=0, classifier_distance=0):
@@ -306,8 +306,8 @@ class ExSTraCS(BaseEstimator, ClassifierMixin):
         self.total_patches = total_patches
         self.init_best_pop = init_best_pop
 
-        self.log_popfile_path = os.path.join(log_dir_path, log_popfile_name)
-        log_trainingfile_path = os.path.join(log_dir_path, log_trainingfile_name)
+        self.log_popfile_path = os.path.join(log_dir, log_popfile_name)
+        log_trainingfile_path = os.path.join(log_dir, log_trainingfile_name)
 
         self.log_trainingfile = open(log_trainingfile_path, 'w', newline='')
         print("Printing Header -", "IterationNo Accuracy PopulationNumerosity Population Theshold Classifier_Distance\n")
