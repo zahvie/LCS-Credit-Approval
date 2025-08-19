@@ -310,7 +310,7 @@ class ExSTraCS(BaseEstimator, ClassifierMixin):
         log_trainingfile_path = os.path.join(log_dir, log_trainingfile_name)
 
         self.log_trainingfile = open(log_trainingfile_path, 'w', newline='')
-#        print("Printing Header -", "IterationNo Accuracy PopulationNumerosity Population Theshold Classifier_Distance\n")
+        print("Printing Header -", "IterationNo Accuracy PopulationNumerosity Population Theshold classifier_distance\n")
         self.log_trainingfile.write("IterationNo,Accuracy,PopulationNumerosity,Population,matchSetSize,correctSetSize,macroPopSize,microPopSize,avgIterAge,subsumptionCount,crossOverCount,mutationCount,coveringCount,deletionCount,threshold,classifer_distance\n")
 
     def checkIsInt(self, num):
