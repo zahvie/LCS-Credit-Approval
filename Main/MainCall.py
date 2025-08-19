@@ -102,7 +102,7 @@ else:
     print("⚠ Running using Physical log directory:", log_dir)
 
 
-train_converter = StringEnumerator(train_file,'Class')
+train_converter = StringEnumerator(train_file_path,'Class')
 train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = train_converter.get_params()
 #print(train_dataFeatures, train_dataPhenotypes)
 #print("Debugging: Features Loaded - train_dataFeatures", train_dataFeatures[:5])
@@ -118,7 +118,7 @@ train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = trai
 results_file = os.path.join(log_dir, 'testing_results.csv')
 
 # Extract the data file name (without extension) from the training file path
-data_file_name = os.path.splitext(os.path.basename(train_file))[0]
+data_file_name = os.path.splitext(os.path.basename(train_file_path))[0]
 print("Extract the data file name (without extension) -",data_file_name)
 
 # Remove "train_" prefix if it exists
@@ -182,7 +182,7 @@ print("Model Training Accuracy ", training_accuracy)
 model.log_trainingfile.write("Training Accuracy: {:.4f}\n".format(training_accuracy))
 
 # Test data conversion
-test_converter = StringEnumerator(test_file, 'Class')
+test_converter = StringEnumerator(test_file_path, 'Class')
 test_headers, test_classLabel, test_dataFeatures, test_dataPhenotypes = test_converter.get_params()
 
 print("Testing Data Shape:", test_dataFeatures.shape)
