@@ -101,7 +101,7 @@ else:
     log_dir_path = log_dir
     print("⚠ Running using Physical log directory:", log_dir)
 
-
+print('train file path is -->',train_file_path)
 train_converter = StringEnumerator(train_file_path,'Class')
 train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = train_converter.get_params()
 #print(train_dataFeatures, train_dataPhenotypes)
