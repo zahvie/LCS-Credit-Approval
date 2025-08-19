@@ -20,43 +20,65 @@ print("Running in Google Colab?", in_colab)
 
 
 # Default: local file path (Windows)
+
+#Loan Approval Data #########
 train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan Approval Data\train_Loan_Approval_Data.csv'
 test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan Approval Data\test_Loan_Approval_Data.csv'
 
+# Loan Approval_Prediction Data
+#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan_Approval_Prediction\train_Loan_Approval_Prediction.csv'
+#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan_Approval_Prediction\test_Loan_Approval_Prediction.csv'
+
+
+
 # Alternative: Colab path
+
+#Loan Approval Data #########
 train_colab_path = "/content/repo/data/LAD/train_Loan_Approval_Data.csv"
 test_colab_path = "/content/repo/data/LAD/test_Loan_Approval_Data.csv"
     
 
-# Decide which one to use
+# Loan Approval_Prediction Data
+#train_colab_path = "/content/repo/data/LAP/train_Loan_Approval_Prediction.csv"
+#test_colab_path = "/content/repo/data/LAP/test_Loan_Approval_Prediction.csv"
+    
+# Decide which train and test file to use
 if in_colab:
     if os.path.exists(train_colab_path):
         print("✅ Running in Colab & train file exists:", train_colab_path)
         train_file_path = train_colab_path
-        print("OS Path",os.path.exists(train_file_path))
-        print("Google Colab train file is used", in_colab)
+        print("Google Colab Path",os.path.exists(train_file_path))
+        print("Google Colab train file is used -->", in_colab)
     else:
+        train_file_path = train_colab_path
         print("⚠ Running in Colab but train file not found:", train_file_path)
-        train_file_path = train_file
-        print("OS Path",train_file_path)
 
     if os.path.exists(test_colab_path):
         print("✅ Running in Colab & test file exists:", test_colab_path)
         test_file_path = test_colab_path
-        print("OS Path",os.path.exists(test_file_path))
-        print("Google Colab train file is used", in_colab)
+        print("Google Colab Path",os.path.exists(test_file_path))
+        print("Google Colab test file is used -->", in_colab)
     else:
-        print("⚠ Running in Colab but test file not found:", train_file_path)
-        test_file_path = test_file
-        print("OS Path",test_file_path)
+        test_file_path = test_colab_path
+        print("⚠ Running in Colab but test file not found:", test_file_path)
 else:
-    print("⚠ Running using Physical train file:", train_file)
-    print("⚠ Running using Physical test file:", test_file)
-    train_file_path = train_file
-    test_file_path = test_file
-    print("OS train Path",train_file_path)
-    print("OS test Path",test_file_path)
-    print("💻 Not running in Colab")
+    if os.path.exists(train_file):
+        print("⚠ Running using Physical train file:", train_file)
+        train_file_path = train_file
+        print("Physical file Path",os.path.exists(train_file_path))
+        print("Physical train file is used -->", in_colab)
+    else:
+        train_file_path = train_file
+        print("💻 Not running in Colab but physical train file not found:", train_file_path)
+
+    if os.path.exists(test_file):
+        print("⚠ Running using Physical test file:", test_file)
+        test_file_path = test_file
+        print("Physical file Path",os.path.exists(test_file_path))
+        print("Physical test file is used -->", in_colab)
+    else:
+        test_file_path = test_file
+        print("💻 Not running in Colab but physical test file not found:", test_file_path)
 
 
 # Default: local log path (Windows)
@@ -66,88 +88,19 @@ log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
 colab_log_dir = '/content/repo/logs'
 
 
+# Decide which train and test file to use
 if in_colab:
     if os.path.exists(colab_log_dir):
         print("✅ Running in Colab & log directory exists:", colab_log_dir)
+        log_dir_path = colab_log_dir
+        print("Google Colab log directory is used", log_dir_path)
     else:
+        log_dir_path = colab_log_dir
         print("⚠ Running in Colab but log directory not found:", colab_log_dir)
 else:
+    log_dir_path = log_dir
     print("⚠ Running using Physical log directory:", log_dir)
 
-'''
-log_dir = r'D:\Python\Thesis\ExSTraCS\test\Logs'
-#log_trainingfile_name = f"log_training_{current_time}.txt"  # Name the log file with the current time
-#log_file_path = os.path.join(log_dir, log_trainingfile_name)
-
-#logging.basicConfig(filename=log_file_path, level=logging.INFO, 
-#                    format='%(asctime)s - %(message)s')
-
-#Default Credit Card Clients
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\train_CC_data.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\test_CC_data.csv'
-
-#Clean Data
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Clean\train_clean_dataset.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Clean\test_clean_dataset.csv'
-
-#Credit Risk #########
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Credit_Risk\train_credit_risk.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Credit_Risk\test_credit_risk.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\train_application_data.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\test_application_data.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Credit_Risk\train_credit_risk.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Credit_Risk\test_credit_risk.csv'
-
-# Loan Approval_Prediction #########
-#train_file = r'D:\Personal\Studies\MSc\Thesis\Code Backup\Laptop\32-2025-05-13_After_Mixed_Method\skExSTraCS'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan_Approval_Prediction\test_Loan_Approval_Prediction.csv'
-
-#############################
-#Loan Approval Data #########
-train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan Approval Data\train_Loan_Approval_Data.csv'
-test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Loan Approval Data\test_Loan_Approval_Data.csv'
-
-# Application Data
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Application_Data\train_Application_Data.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Application_Data\test_Application_Dataa.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Application_Data\train_application_data_sample3.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\Application_Data\test_application_data_sample3.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\latent_train_features_with_class_cnn.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\latent_test_features_with_class_cnn.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\latent_train_features_with_class_MLP.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\latent_test_features_with_class_MLP.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\train_loan_approval_data_cleaned.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\test_loan_approval_data_cleaned.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\feature_selected_train_RFE.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\feature_selected_test_RFE.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\latent_train_features_with_class_XGBoost.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\latent_test_features_with_class_XGBoost.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\train_loan_approval_data.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\test_loan_approval_data.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\latent_train_features_with_class_XGBoost.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\latent_test_features_with_class_XGBoost.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\train_Clean_data_FE_Concat.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\test_Clean_data_FE_Concat.csv'
-
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\train_Clean_Sample2.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\test_Clean_Sample2.csv'
-
-#PLC_Data
-#train_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\PLC_Data\train_plc_data.csv'
-#test_file = r'D:\Python\Thesis\ExSTraCS\test\DataSets\Real\Data\PLC_Data\test_plc_data.csv'
-
-#print("Debugging: Loading train file", train_file)
 
 train_converter = StringEnumerator(train_file,'Class')
 train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = train_converter.get_params()
