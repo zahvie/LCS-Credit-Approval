@@ -148,7 +148,7 @@ log_file_path = os.path.join(log_dir_path, log_trainingfile_name)
 
  
 last_iterations = 100
-max_iterations = 25000
+max_iterations = 100000
 N=7000
 rule_specificity_limit = 8
 use_feature_ranked_RSL= True
