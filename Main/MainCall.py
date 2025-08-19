@@ -107,7 +107,7 @@ print('train file path is -->',train_file_path)
 
 train_converter = StringEnumerator(train_file_path,'Class')
 train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = train_converter.get_params()
-#print(train_dataFeatures, train_dataPhenotypes)
+print(train_dataFeatures, train_dataPhenotypes)
 #print("Debugging: Features Loaded - train_dataFeatures", train_dataFeatures[:5])
 #print("Training Data Shape:", train_dataFeatures.shape)
 
@@ -147,7 +147,7 @@ log_file_path = os.path.join(log_dir, log_trainingfile_name)
 
  
 last_iterations = 100
-max_iterations = 1000
+max_iterations = 10000
 N=7000
 rule_specificity_limit = 8
 use_feature_ranked_RSL= True
