@@ -102,6 +102,8 @@ else:
     print("⚠ Running using Physical log directory:", log_dir)
 
 print('train file path is -->',train_file_path)
+
+'''
 train_converter = StringEnumerator(train_file_path,'Class')
 train_headers, train_classLabel, train_dataFeatures, train_dataPhenotypes = train_converter.get_params()
 #print(train_dataFeatures, train_dataPhenotypes)
@@ -222,3 +224,4 @@ else:
 # Once the loop ends, the script will stop if learning_iterations >= 1,000,001
 print("Maximum learning_iterations reached. Stopping execution.")
 
+'''
