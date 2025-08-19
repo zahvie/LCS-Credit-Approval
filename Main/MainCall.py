@@ -166,7 +166,8 @@ log_file = open("log_trainingfile.csv", 'w', newline='')  # Open the log file
 
 #model = ExSTraCS(learning_iterations=max_iterations, N=N, nu=10)
 #model = ExSTraCS(learning_iterations=max_iterations, N=N, nu=10, rule_specificity_limit = rule_specificity_limit)
-model = ExSTraCS(learning_iterations=max_iterations, N=N, nu=10, use_feature_ranked_RSL=use_feature_ranked_RSL)
+model = ExSTraCS(learning_iterations=max_iterations, N=N, nu=10, log_dir=log_dir, 
+                 use_feature_ranked_RSL=use_feature_ranked_RSL)
 #model = ExSTraCS(learning_iterations=max_iterations, N=N, nu=10, 
 #                 use_midpoint_distance_filter=use_midpoint_distance_filter)
 

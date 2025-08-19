@@ -306,8 +306,8 @@ class ExSTraCS(BaseEstimator, ClassifierMixin):
         self.total_patches = total_patches
         self.init_best_pop = init_best_pop
 
-        self.log_popfile_path = os.path.join(log_dir, log_popfile_name)
-        log_trainingfile_path = os.path.join(log_dir, log_trainingfile_name)
+        self.log_popfile_path = os.path.join(log_dir_path, log_popfile_name)
+        log_trainingfile_path = os.path.join(log_dir_path, log_trainingfile_name)
 
         self.log_trainingfile = open(log_trainingfile_path, 'w', newline='')
         print("Printing Header -", "IterationNo Accuracy PopulationNumerosity Population Theshold Classifier_Distance\n")
