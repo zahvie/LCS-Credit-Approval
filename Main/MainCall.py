@@ -100,6 +100,7 @@ if in_colab:
 else:
     log_dir_path = log_dir
     print("⚠ Running using Physical log directory:", log_dir)
+print(">>> DEBUG: Using this file for training:", train_file_path)
 
 print('train file path is -->',train_file_path)
 
